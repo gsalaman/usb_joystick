@@ -74,9 +74,33 @@ def gamepad_read_blocking(gamepad):
     if (event_string != None):
       return gamepad_parse(event)
 
+################################################
+# gamepad_read_nonblocking
+#   This returns a single event from the gamepad....
+################################################
+def gamepad_read_nonblocking(gamepad):
+
+  # This isn't perfect...since we're returning the first value we see, if there are
+  #   "chorded" presses, we can miss events.
+  event = gamepad.read_one()
+  if event == None:
+    return "No Input"
+  else:
+    event_string = gamepad_parse(event)
+    if (event_string != None):
+      return gamepad_parse(event)
+    else:
+      return "No Input"
+
 ##################################################
 # Main loop
 ##################################################
 print(gamepad)
 while True:
-  print gamepad_read_blocking(gamepad)
+  #uncomment the following line to test blocking reads
+  #print gamepad_read_blocking(gamepad)
+
+  # non-blocking implementation:
+  my_string = gamepad_read_nonblocking(gamepad)
+  if (my_string != "No Input"):
+    print my_string
