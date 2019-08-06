@@ -2,24 +2,26 @@ from evdev import InputDevice, categorize, ecodes
 
 gamepad = InputDevice('/dev/input/event0')
 
-def gamepad_read_blocking(gamepad):
-  # These are the key definitions for the generic USB joystick
-  d_up = 544
-  d_down = 545
-  d_left = 546
-  d_right = 547
-  x = 288
-  y = 291
-  a = 289
-  b = 290
-  select = 296
-  start = 297
-  right_bumper = 293
-  left_bumper = 292 
+#################################
+# gamepad_parse
+#   parses a single event and returns a string that represents that event.
+#################################
+def gamepad_parse(event):
 
-  # This isn't perfect...since we're returning the first value we see, if there are
-  #   "chorded" presses, we can miss events.
-  for event in gamepad.read_loop():
+    # These are the key definitions for the generic USB joystick
+    d_up = 544
+    d_down = 545
+    d_left = 546
+    d_right = 547
+    x = 288
+    y = 291
+    a = 289
+    b = 290
+    select = 296
+    start = 297
+    right_bumper = 293
+    left_bumper = 292 
+
     # parse keypress events
     if event.type ==ecodes.EV_KEY:
 
@@ -59,7 +61,22 @@ def gamepad_read_blocking(gamepad):
         if event.value == 255:
           return("D-down")
   
+################################################
+# gamepad_read_blocking
+#   This returns a single event from the gamepad...blocking until we get one.
+################################################
+def gamepad_read_blocking(gamepad):
 
+  # This isn't perfect...since we're returning the first value we see, if there are
+  #   "chorded" presses, we can miss events.
+  for event in gamepad.read_loop():
+    event_string = gamepad_parse(event)
+    if (event_string != None):
+      return gamepad_parse(event)
+
+##################################################
+# Main loop
+##################################################
 print(gamepad)
 while True:
   print gamepad_read_blocking(gamepad)
