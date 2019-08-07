@@ -1,9 +1,11 @@
 # usb_joystick
-Generic USB joystick parser
+Generic USB joystick parser, built off of evdev
 
-Python code to parse button events off of the generic USB joystick, using the evdev package.
+You can use usb_gamepad.py to parse events in your pi games.  It assumes a USB device connected.
 
-generic_read.py gives the raw events.
+driver.py uses that file to demonstrate non-blocking reads.
+
+generic_read.py gives the raw events. Good for debugging.
 
 usb_parse.py parses out the events into a text string.
 
