@@ -1,16 +1,67 @@
-from evdev import InputDevice, categorize, ecodes
+import evdev
 
-try:
-  gamepad = InputDevice('/dev/input/event0')
-except:
-  print("Gamepad not connected")
-  exit(1)
+# our list of attached, supported gamepads.
+gamepads = []
 
 #################################
-# gamepad_parse
+# init
+#   This function initializes our gamepad module.  Pass in the number
+#   of gamepads you are expecting to use.  Returns error code if not 
+#   successful.
+################################# 
+def init(expected_gamepads):
+  global gamepads
+  
+  if (expected_gamepads != 1):
+    return("unsupported number of gamepads")
+
+  # cleanup necessary?
+  del gamepads[:]
+
+  supported_gamepads = [ 
+    'Sony PLAYSTATION(R)3 Controller'
+  ]
+
+  devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
+  for device in devices:
+    for supported_gamepad in supported_gamepads:
+      if device.name == supported_gamepad:
+        gamepads.append(evdev.InputDevice(device.path)) 
+        return device.name 
+
+  return "No device found"
+
+#################################
+# parse_ps3 
 #   parses a single event and returns a string that represents that event.
 #################################
-def gamepad_parse(event):
+def parse_ps3(event):
+
+    # These are the key definitions for the ps3 controller 
+    d_up = 544
+    d_down = 545
+    d_left = 546
+    d_right = 547
+
+    # parse keypress events
+    if event.type ==evdev.ecodes.EV_KEY:
+
+      # 1 indicates key press.  0 indicates release
+      if event.value == 1:
+        if event.code == d_up:
+          return("D-up")
+        elif event.code == d_down:
+          return("D-down")
+        elif event.code == d_left:
+          return("D-left") 
+        elif event.code == d_right: 
+          return("D-right")
+
+#################################
+# parse_generic_usb 
+#   parses a single event and returns a string that represents that event.
+#################################
+def parse_generic_usb(event):
 
     # These are the key definitions for the generic USB joystick
     d_up = 544
@@ -80,20 +131,22 @@ def gamepad_read_blocking():
       return gamepad_parse(event)
 
 ################################################
-# gamepad_read_nonblocking
-#   This returns a single event from the gamepad....
+# read_nonblocking
+#   This returns a single event from the specified gamepad
 ################################################
-def gamepad_read_nonblocking():
-  global gamepad
+def read_nonblocking(index):
+  global gamepads
 
   # This isn't perfect...since we're returning the first value we see, if there are
   #   "chorded" presses, we can miss events.
-  event = gamepad.read_one()
+  event = gamepads[index].read_one()
   if event == None:
     return "No Input"
   else:
-    event_string = gamepad_parse(event)
+    # 1st cut:  just assume it's ps3 to test my parsing.  We'll add the 
+    # controller switch later.
+    event_string = parse_ps3(event)
     if (event_string != None):
-      return gamepad_parse(event)
+      return(event_string)
     else:
       return "No Input"
