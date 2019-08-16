@@ -117,18 +117,20 @@ def parse_generic_usb(event):
           return("D-down")
   
 ################################################
-# gamepad_read_blocking
-#   This returns a single event from the gamepad...blocking until we get one.
+# read_blocking
+#   This returns a single event from the specified gamepad...blocking 
+# until we get one.
 ################################################
-def gamepad_read_blocking():
-  global gamepad
+def read_blocking(index):
+  global gamepads
 
   # This isn't perfect...since we're returning the first value we see, if there are
   #   "chorded" presses, we can miss events.
-  for event in gamepad.read_loop():
-    event_string = gamepad_parse(event)
+  for event in gamepads[index].read_loop():
+    # current implemetation assumes a PS3 controller
+    event_string = parse_ps3(event)
     if (event_string != None):
-      return gamepad_parse(event)
+      return event_string
 
 ################################################
 # read_nonblocking
