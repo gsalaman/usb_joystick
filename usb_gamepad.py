@@ -12,9 +12,6 @@ gamepads = []
 def init(expected_gamepads):
   global gamepads
   
-  if (expected_gamepads != 1):
-    return("unsupported number of gamepads")
-
   # cleanup necessary?
   del gamepads[:]
 
@@ -22,14 +19,21 @@ def init(expected_gamepads):
     'Sony PLAYSTATION(R)3 Controller'
   ]
 
+  valid_gamepad_count = 0
+
   devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
   for device in devices:
     for supported_gamepad in supported_gamepads:
       if device.name == supported_gamepad:
         gamepads.append(evdev.InputDevice(device.path)) 
-        return device.name 
+        valid_gamepad_count = valid_gamepad_count + 1
+        if valid_gamepad_count == expected_gamepads:
+          return "success" 
 
-  return "No device found"
+  if (valid_gamepad_count > 0):
+    return ("Only "+str(valid_gamepad_count)+" gamepads found")
+  else:
+    return "No device found"
 
 #################################
 # parse_ps3 
@@ -117,6 +121,23 @@ def parse_generic_usb(event):
           return("D-down")
   
 ################################################
+# parse_event 
+#  
+################################################
+def parse_event(gamepad_index, event):
+  global gamepads
+
+  # figure out which lookup translation we need based on gamepad index
+  gamepad_name = gamepads[gamepad_index].name
+  if (gamepad_name == "Sony PLAYSTATION(R)3 Controller"):
+    return parse_ps3(event)
+  elif (gamepad_name == "USB Gamepad "):
+    return parse_generic_usb(event)
+  else:
+    print "Unsupported gamepad type in parse event: "+gamepad.name
+    exit(0)
+
+################################################
 # read_blocking
 #   This returns a single event from the specified gamepad...blocking 
 # until we get one.
@@ -128,7 +149,7 @@ def read_blocking(index):
   #   "chorded" presses, we can miss events.
   for event in gamepads[index].read_loop():
     # current implemetation assumes a PS3 controller
-    event_string = parse_ps3(event)
+    event_string = parse_event(index, event)
     if (event_string != None):
       return event_string
 
@@ -145,9 +166,7 @@ def read_nonblocking(index):
   if event == None:
     return "No Input"
   else:
-    # 1st cut:  just assume it's ps3 to test my parsing.  We'll add the 
-    # controller switch later.
-    event_string = parse_ps3(event)
+    event_string = parse_event(index,event)
     if (event_string != None):
       return(event_string)
     else:
